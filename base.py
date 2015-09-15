@@ -5,9 +5,6 @@ import re
 import os
 import sys 
 import time
-# reload(sys)  
-# sys.setdefaultencoding('utf8')
-
 class Base:
     def __init__(self,path='./',delay=0,large=0,detail=False,spiderAll=False):
         self.path = path
@@ -22,10 +19,13 @@ class Base:
         fo.close()
     
     def read(self,path,name):
-        fo = open(path+name,'r')
-        str = fo.read()
-        fo.close()
-        return str
+        try:
+            fo = open(path+name,'r')
+            str = fo.read()
+            fo.close()
+            return str
+        except:
+            return ""
     def mkdir(self,path):
         isExists = os.path.exists(path)
         if not isExists:#不存在目录
@@ -37,7 +37,9 @@ class Base:
             httpsHandler=urllib2.HTTPSHandler(debuglevel=1)
             opener=urllib2.build_opener(httpHandler,httpsHandler)
             urllib2.install_opener(opener)
-        req = urllib2.Request(url)
+        req = urllib2.Request(url, postdata,headers)
+        if self.large!=0:#每次抓取间隔large秒,防止503错误
+            time.sleep(self.large)
         try:
             rep = urllib2.urlopen(req,postdata,timeout=10)
             page = rep.read()
@@ -45,13 +47,15 @@ class Base:
             page = "self.path"+url
             print self.path,",线程网络发生错误,",self.delay,"秒之后重新抓取",url
             return self.delay
-        page = page.decode('gb18030')
-        page = page.encode('utf8')
-        return page
-
+        try:
+            page = page.decode('gb18030')
+            page = page.encode('utf8')
+            return page
+        except:
+            self.write('./','code.log',url+'\n')
     def getHomePage(self,url,name,postdata=urllib.urlencode({})):
         page = self.getPage(url)
-        if page==self.delay:
+        if page == self.delay:
             return page
         self.mkdir(self.path+'home/')
         self.getContents(page,name)
@@ -67,6 +71,8 @@ class Base:
         self.mkdir(self.path+'post_time/')
         self.mkdir(self.path+'reply_time/')
         self.mkdir(self.path+'link/')
+        self.mkdir(self.path+'source_article/')
+        self.mkdir(self.path+'article/')
         for m1 in re.finditer( '<tr>(.|\n)+?</tr>', m.group()):#得到包含标签 标题 时间 作者 最后一次评论时间 发表时间的内容的字符串 一共70条 m1.group(0)
             if len(m1.group())<=200:
                 continue
@@ -78,14 +84,19 @@ class Base:
             self.write(self.path+'post_time/',pre_name+'_'+str(i)+'.html',content['post_time'])
             self.write(self.path+'reply_time/',pre_name+'_'+str(i)+'.html',content['reply_time'])
             self.write(self.path+'link/',pre_name+'_'+str(i)+'.html',content['link'])
+            if '长沙' not in self.path and i<9 and int(pre_name)==1:
+                self.write(self.path+'source_article/',pre_name+'_'+str(i)+'.html','')
+                self.write(self.path+'article/',pre_name+'_'+str(i)+'.html','')
+                i+=1
+                continue
             while True:
-                    repeat = self.getDetail(detailUrl,int(pre_name),i)
+                    repeat = self.getDetail(content['link'],int(pre_name),i)
                     if repeat == self.delay:#503错误出现,线程暂停delay秒
                             time.sleep(self.delay)
                             continue
                     else:
                         break
-            print self.cityName,"第",pre_name,"页第",i,"条抓取完毕"
+            print self.path,"第",pre_name,"页第",i,"条抓取完毕"
                 
             i+=1
 
@@ -130,11 +141,12 @@ class Base:
         page = self.getPage(url)
         if page==self.delay:
             return page
-        self.mkdir(self.path+'source_articel/')
-        self.write(self.path+'source_articel/',str(i)+'_'+str(j)+'.html',page)
+        self.mkdir(self.path+'source_article/')
+        self.write(self.path+'source_article/',str(i)+'_'+str(j)+'.html',page)
         for m in re.finditer('class="t_f"(.|\n)+?</td>', page):
-            detail = re.compile(r'&nbsp;|\d+-\d+-\d+ \d+:\d+ 上传|下载附件|\(.*\)|<(.|\n)+?>').sub('','<'+m.group(0))
-            self.mkdir(self.path+'articel/')
-            self.write(self.path+'articel/',str(i)+'_'+str(j)+'.html',detail)
+            # detail = re.compile(r'&nbsp;|\d+-\d+-\d+ \d+:\d+ 上传|下载附件|\(.*\)|<(.|\n)+?>').sub('','<'+m.group(0))
+            detail = re.compile(r'&nbsp;|\d+-\d+-\d+ \d+:\d+ 上传|下载附件|\(.*\)|<(.|\n)+?>|，|。|？|！|～|：|“|”|——|（|）|？|、|\r\n').sub(' ','<'+m.group(0))
+            self.mkdir(self.path+'article/')
+            self.write(self.path+'article/',str(i)+'_'+str(j)+'.html',detail)
             if spiderAll == False:
                 return 

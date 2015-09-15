@@ -1,6 +1,12 @@
 #coding=utf-8
-from base import * #阳 岳阳 益阳 常德 邵阳 娄底 永州 郴州 怀化 湘西 张家界 京沪江浙 粤港澳台
+from base import *
 from Thread import *
+import sys
+import re
+"""
+delay 503错误时休眠的时间间隔
+large 开启下一个线程的缓冲时间
+"""
 city = {
         "长沙":"http://bbs.rednet.cn/forum-1757-2.html",
          "株洲":"http://bbs.rednet.cn/forum-68-1.html",
@@ -17,12 +23,10 @@ city = {
          "湘西":"http://bbs.rednet.cn/forum-79-1.html",
          "张家界":"http://bbs.rednet.cn/forum-80-1.html",
 }
-url = "http://bbs.rednet.cn/forum-1757-1.html"
-# print os.path.isfile('base1.py')
-# page = bs.read('./长沙/home/',str(1)+".html")
 today =datetime.date.today().strftime('%Y-%m-%d')
 delay = 120
-large =2
+large = 10
 for x in city:
-    thread = threadHome(x+"详细",city[x],'./'+today+'/'+x,delay,large)
+    thread = threadHome(x,city[x],'./'+today+'/'+x,delay)
     thread.start()
+    time.sleep(large)
