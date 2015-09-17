@@ -5,14 +5,24 @@ import re
 import os
 import sys 
 import time
+import requests
 class Base:
-    def __init__(self,path='./',delay=0,large=0,detail=False,spiderAll=False):
+    def __init__(self, path='./', delay=0, large=0, spiderAll=False):
         self.path = path
         self.delay = delay
-        self.detail = detail
         self.spiderAll =spiderAll
         self.large = large
-
+        self.mkdir(self.path+'home/')
+        self.mkdir(self.path+'title/')
+        self.mkdir(self.path+'author/')
+        self.mkdir(self.path+'read_number/')
+        self.mkdir(self.path+'reply_number/')
+        self.mkdir(self.path+'post_time/')
+        self.mkdir(self.path+'reply_time/')
+        self.mkdir(self.path+'link/')
+        self.mkdir(self.path+'source_article/')
+        self.mkdir(self.path+'article/')
+        
     def write(self,path,name,content):
         fo = open(path+name,'w')
         fo.write(content)
@@ -32,47 +42,41 @@ class Base:
             os.makedirs(path)
     def getPage(self,url,postdata=urllib.urlencode({})):
         headers = {'User-Agent':'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.6) Gecko/20150727 Firefox/3.5.6'}
-        if self.detail:
-            httpHandler = urllib2.HTTPHandler(debuglevel=1)
-            httpsHandler=urllib2.HTTPSHandler(debuglevel=1)
-            opener=urllib2.build_opener(httpHandler,httpsHandler)
-            urllib2.install_opener(opener)
-        req = urllib2.Request(url, postdata,headers)
-        if self.large!=0:#每次抓取间隔large秒,防止503错误
+        try :
+            req = requests.get(url, headers = headers, timeout=10)
+        except :
+            print self.path,",获取cookie发生错误,",self.delay,"秒之后重新获取",url
+            return self.delay
+        COOKIE = {}
+        for cookie in req.cookies:
+            COOKIE.setdefault(cookie.name,cookie.value)
+        time.sleep(1)
+        if self.large != 0 :#每次抓取间隔large秒,防止503错误
             time.sleep(self.large)
-        try:
-            rep = urllib2.urlopen(req,postdata,timeout=10)
-            page = rep.read()
+        try :
+            req = requests.get(url, headers = headers, cookies = COOKIE, timeout=10)
+            page = req.text
+            if len(page) < 2048 :
+                print self.path,",cookie发送错误,",self.delay,"秒之后重新抓取",url
+                return self.delay
         except:
-            page = "self.path"+url
             print self.path,",线程网络发生错误,",self.delay,"秒之后重新抓取",url
             return self.delay
         try:
-            page = page.decode('gb18030')
             page = page.encode('utf8')
             return page
         except:
-            self.write('./','code.log',url+'\n')
+            self.write('./log','code.log',url+'\n')
     def getHomePage(self,url,name,postdata=urllib.urlencode({})):
         page = self.getPage(url)
         if page == self.delay:
             return page
-        self.mkdir(self.path+'home/')
-        self.getContents(page,name)
         self.write(self.path+'home/',name+'.html',page)
+        self.getContents(page,name)
 
     def getContents(self,str1,pre_name):
         m =  re.search('<table summary=(.|\n)*</table><', str1)
         i=1
-        self.mkdir(self.path+'title/')
-        self.mkdir(self.path+'author/')
-        self.mkdir(self.path+'read_number/')
-        self.mkdir(self.path+'reply_number/')
-        self.mkdir(self.path+'post_time/')
-        self.mkdir(self.path+'reply_time/')
-        self.mkdir(self.path+'link/')
-        self.mkdir(self.path+'source_article/')
-        self.mkdir(self.path+'article/')
         for m1 in re.finditer( '<tr>(.|\n)+?</tr>', m.group()):#得到包含标签 标题 时间 作者 最后一次评论时间 发表时间的内容的字符串 一共70条 m1.group(0)
             if len(m1.group())<=200:
                 continue

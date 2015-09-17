@@ -24,7 +24,7 @@ class threadHome(threading.Thread):#首页抓取线程
 					time.sleep(self.delay)
 					maxContinue -= 1
 					if maxContinue < 0 :
-						bs.write('./', '503.log',detailUrl+'\n')
+						bs.write('./log', '503.log',detailUrl+'\n')
 						break
 					continue
 				else :
