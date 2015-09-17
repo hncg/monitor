@@ -10,22 +10,40 @@ import requests
 from utils import *
 
 class Base(object):
+class Base:
     def __init__(self, path='./', delay=0, large=0, spiderAll=False):
         self.path = path
         self.delay = delay
         self.spiderAll =spiderAll
         self.large = large
-        mkdir(self.path+'home/')
-        mkdir(self.path+'title/')
-        mkdir(self.path+'author/')
-        mkdir(self.path+'read_number/')
-        mkdir(self.path+'reply_number/')
-        mkdir(self.path+'post_time/')
-        mkdir(self.path+'reply_time/')
-        mkdir(self.path+'link/')
-        mkdir(self.path+'source_article/')
-        mkdir(self.path+'article/')
+        self.mkdir(self.path+'home/')
+        self.mkdir(self.path+'title/')
+        self.mkdir(self.path+'author/')
+        self.mkdir(self.path+'read_number/')
+        self.mkdir(self.path+'reply_number/')
+        self.mkdir(self.path+'post_time/')
+        self.mkdir(self.path+'reply_time/')
+        self.mkdir(self.path+'link/')
+        self.mkdir(self.path+'source_article/')
+        self.mkdir(self.path+'article/')
 
+    def write(self,path,name,content):
+        fo = open(path+name,'w')
+        fo.write(content)
+        fo.close()
+
+    def read(self,path,name):
+        try:
+            fo = open(path+name,'r')
+            str = fo.read()
+            fo.close()
+            return str
+        except:
+            return ""
+    def mkdir(self,path):
+        isExists = os.path.exists(path)
+        if not isExists:#不存在目录
+            os.makedirs(path)
     def getPage(self,url,postdata=urllib.urlencode({})):
         headers = {'User-Agent':'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.6) Gecko/20150727 Firefox/3.5.6'}
         try :
