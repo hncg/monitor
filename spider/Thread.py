@@ -5,16 +5,16 @@ import	time
 from base import * #阳 岳阳 益阳 常德 邵阳 娄底 永州 郴州 怀化 湘西 张家界 京沪江浙 粤港澳台
 class threadHome(threading.Thread):#首页抓取线程
 
-	def __init__(self, threadName, url, cityName, delay) :
+	def __init__(self, threadName, url, cityName, delay, large) :
 		threading.Thread.__init__(self)
 		self.threadName = threadName
 		self.url = url
 		self.cityName = cityName
 		self.delay = delay
-
+		self.large = large
 	def run(self):
 		print self.threadName,"线程开始抓取"
-		bs = Base(self.cityName+'/', self.delay)
+		bs = Base(self.cityName+'/', self.delay, self.large)
 		for i in xrange(1, 101) :
 			homeUrl = re.compile('\\d+.html').sub(str(i)+".html", self.url)
 			maxContinue = 100

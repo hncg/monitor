@@ -6,40 +6,24 @@ import os
 import sys 
 import time
 import requests
+from fileio import *
 class Base:
     def __init__(self, path='./', delay=0, large=0, spiderAll=False):
         self.path = path
         self.delay = delay
         self.spiderAll =spiderAll
         self.large = large
-        self.mkdir(self.path+'home/')
-        self.mkdir(self.path+'title/')
-        self.mkdir(self.path+'author/')
-        self.mkdir(self.path+'read_number/')
-        self.mkdir(self.path+'reply_number/')
-        self.mkdir(self.path+'post_time/')
-        self.mkdir(self.path+'reply_time/')
-        self.mkdir(self.path+'link/')
-        self.mkdir(self.path+'source_article/')
-        self.mkdir(self.path+'article/')
+        mkdir(self.path+'home/')
+        mkdir(self.path+'title/')
+        mkdir(self.path+'author/')
+        mkdir(self.path+'read_number/')
+        mkdir(self.path+'reply_number/')
+        mkdir(self.path+'post_time/')
+        mkdir(self.path+'reply_time/')
+        mkdir(self.path+'link/')
+        mkdir(self.path+'source_article/')
+        mkdir(self.path+'article/')
         
-    def write(self,path,name,content):
-        fo = open(path+name,'w')
-        fo.write(content)
-        fo.close()
-    
-    def read(self,path,name):
-        try:
-            fo = open(path+name,'r')
-            str = fo.read()
-            fo.close()
-            return str
-        except:
-            return ""
-    def mkdir(self,path):
-        isExists = os.path.exists(path)
-        if not isExists:#不存在目录
-            os.makedirs(path)
     def getPage(self,url,postdata=urllib.urlencode({})):
         headers = {'User-Agent':'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.6) Gecko/20150727 Firefox/3.5.6'}
         try :
@@ -50,7 +34,7 @@ class Base:
         COOKIE = {}
         for cookie in req.cookies:
             COOKIE.setdefault(cookie.name,cookie.value)
-        time.sleep(1)
+        time.sleep(self.large)
         if self.large != 0 :#每次抓取间隔large秒,防止503错误
             time.sleep(self.large)
         try :
@@ -66,12 +50,12 @@ class Base:
             page = page.encode('utf8')
             return page
         except:
-            self.write('./log','code.log',url+'\n')
+            write('./log','code.log',self.path + url + '\n')
     def getHomePage(self,url,name,postdata=urllib.urlencode({})):
         page = self.getPage(url)
         if page == self.delay:
             return page
-        self.write(self.path+'home/',name+'.html',page)
+        write(self.path+'home/',name+'.html',page)
         self.getContents(page,name)
 
     def getContents(self,str1,pre_name):
@@ -81,16 +65,16 @@ class Base:
             if len(m1.group())<=200:
                 continue
             content = self.getContent(m1.group())
-            self.write(self.path+'title/',pre_name+'_'+str(i)+'.html',content['title'])
-            self.write(self.path+'author/',pre_name+'_'+str(i)+'.html',content['author'])
-            self.write(self.path+'read_number/',pre_name+'_'+str(i)+'.html',content['read_number'])
-            self.write(self.path+'reply_number/',pre_name+'_'+str(i)+'.html',content['reply_number'])
-            self.write(self.path+'post_time/',pre_name+'_'+str(i)+'.html',content['post_time'])
-            self.write(self.path+'reply_time/',pre_name+'_'+str(i)+'.html',content['reply_time'])
-            self.write(self.path+'link/',pre_name+'_'+str(i)+'.html',content['link'])
+            write(self.path+'title/',pre_name+'_'+str(i)+'.html',content['title'])
+            write(self.path+'author/',pre_name+'_'+str(i)+'.html',content['author'])
+            write(self.path+'read_number/',pre_name+'_'+str(i)+'.html',content['read_number'])
+            write(self.path+'reply_number/',pre_name+'_'+str(i)+'.html',content['reply_number'])
+            write(self.path+'post_time/',pre_name+'_'+str(i)+'.html',content['post_time'])
+            write(self.path+'reply_time/',pre_name+'_'+str(i)+'.html',content['reply_time'])
+            write(self.path+'link/',pre_name+'_'+str(i)+'.html',content['link'])
             if '长沙' not in self.path and i<9 and int(pre_name)==1:
-                self.write(self.path+'source_article/',pre_name+'_'+str(i)+'.html','')
-                self.write(self.path+'article/',pre_name+'_'+str(i)+'.html','')
+                write(self.path+'source_article/',pre_name+'_'+str(i)+'.html','')
+                write(self.path+'article/',pre_name+'_'+str(i)+'.html','')
                 i+=1
                 continue
             while True:
@@ -145,12 +129,12 @@ class Base:
         page = self.getPage(url)
         if page==self.delay:
             return page
-        self.mkdir(self.path+'source_article/')
-        self.write(self.path+'source_article/',str(i)+'_'+str(j)+'.html',page)
+        mkdir(self.path+'source_article/')
+        write(self.path+'source_article/',str(i)+'_'+str(j)+'.html',page)
         for m in re.finditer('class="t_f"(.|\n)+?</td>', page):
             # detail = re.compile(r'&nbsp;|\d+-\d+-\d+ \d+:\d+ 上传|下载附件|\(.*\)|<(.|\n)+?>').sub('','<'+m.group(0))
             detail = re.compile(r'&nbsp;|\d+-\d+-\d+ \d+:\d+ 上传|下载附件|\(.*\)|<(.|\n)+?>|，|。|？|！|～|：|“|”|——|（|）|？|、|\r\n').sub(' ','<'+m.group(0))
-            self.mkdir(self.path+'article/')
-            self.write(self.path+'article/',str(i)+'_'+str(j)+'.html',detail)
+            mkdir(self.path+'article/')
+            write(self.path+'article/',str(i)+'_'+str(j)+'.html',detail)
             if spiderAll == False:
                 return 
