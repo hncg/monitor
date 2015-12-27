@@ -10,7 +10,6 @@ import requests
 from utils import *
 
 class Base(object):
-class Base:
     def __init__(self, path='./', delay=0, large=0, spiderAll=False):
         self.path = path
         self.delay = delay
