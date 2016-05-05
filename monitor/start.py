@@ -11,8 +11,6 @@ if __name__ == '__main__':
     articles = Article.mget_latest_time_at()
     latest_time_at_map = {articles[1]: articles[0] for
                           articles in articles}
-    for city in citys[0:2]:
+    for city in citys:
         tids = [int(tid[0]) for tid in Article.mget_tids_by_city_id(city.id)]
         MyThread(city, latest_time_at_map.get(city.id), tids).start()
-        # text = base.get_home(cityMap.get("长沙"))
-        # fileio.write("../logs/", "test.html", text)

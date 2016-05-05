@@ -52,5 +52,4 @@ class MyThread(threading.Thread):
 								url=article_info['url'],
 							))
 			Article.add_all(articles)
-			break
 		print self.city.name, "结束"
